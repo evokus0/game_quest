@@ -1,89 +1,81 @@
-# This file was created by: Chris Cozort
-# Sources: http://kidscancode.org/blog/2016/08/pygame_1-1_getting-started/
-# Sources: 
+# KidsCanCode - Game Development with Pygame video series
+# Jumpy! (a platform game) - Part 2
+# Video link: https://www.youtube.com/watch?v=8LRI0RLKyt0
+# Player movement
 
-'''
-Lore for last week:
-Functions, methods, Classes, scope('global' vs local)
-For loops, break, pass, % modulu, 
-string and list traversal
+# (C) KCC
 
-Lore for this week:
-GitHub, Modularity, import as
-'''
-
-# import libs
-import pygame
+import pygame as pg
 import random
-import os
-from pygame.sprite import Sprite
-
 from settings import *
 from sprites import *
 
-# set up assets folders
-game_folder = os.path.dirname(__file__)
-img_folder = os.path.join(game_folder, "img")
+class Game:
+    def __init__(self):
+        # initialize game window, etc
+        pg.init()
+        pg.mixer.init()
+        self.screen = pg.display.set_mode((WIDTH, HEIGHT))
+        pg.display.set_caption(TITLE)
+        self.clock = pg.time.Clock()
+        self.running = True
 
-def get_mouse_now():
-    x,y = pygame.mouse.get_pos()
-    return (x,y)
+    def new(self):
+        # start a new game
+        self.all_sprites = pg.sprite.Group()
+        self.player = Player()
+        self.all_sprites.add(self.player)
+        self.run()
 
-# classes for game
+        # self.platforms = pg.sprite.Group
+        # ground = Platform(0, HEIGHT-40, WIDTH, 40)
+        # self.platforms.add(ground)
+        # self.all_sprites.add(ground)
 
-
-
-# init pygame and create window
-pygame.init()
-# init sound mixer
-pygame.mixer.init()
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("My first game...")
-clock = pygame.time.Clock() 
-
-all_sprites = pygame.sprite.Group()
-enemies = pygame.sprite.Group()
-player = Player()
-# testSprite = Sprite()
-# testSprite.image = pygame.Surface((50,50))
-# testSprite.image.fill(GREEN)
-# testSprite.rect = testSprite.image.get_rect()
-# testSprite.rect.center = (WIDTH / 2, HEIGHT / 2)
-all_sprites.add(player)
-# all_sprites.add(testSprite)
-
-for i in range(0,100):
-    print(i)
-    i = Enemy()
-    i.rect[0] = random.randint(0,WIDTH-25)
-    i.rect[1] = random.randint(0,HEIGHT)
-    enemies.add(i)
-    all_sprites.add(i)
-
-# game loop
+        # plat1 = Platform(200, 400, 150, 20)
 
 
-while RUNNING:
-    #  keep loop running at the right speed
-    clock.tick(FPS)
-    ### process input events section of game loop
-    for event in pygame.event.get():
-        # check for window closing
-        if event.type == pygame.QUIT:
-            RUNNING = False
-            # break
-    # print(get_mouse_now())
-    ### update section of game loop (if updates take longer the 1/30th of a second, you will get laaaaag...)
-    all_sprites.update()
+    def run(self):
+        # Game Loop
+        self.playing = True
+        while self.playing:
+            self.clock.tick(FPS)
+            self.events()
+            self.update()
+            self.draw()
 
-    blocks_hit_list = pygame.sprite.spritecollide(player, enemies, True)
-    for block in blocks_hit_list:
-        print(enemies)
-    ### draw and render section of game loop
-    screen.fill(REDDISH)
-    all_sprites.draw(screen)
-    # double buffering draws frames for entire screen
-    pygame.display.flip()
-    # pygame.display.update() -> only updates a portion of the screen
-# ends program when loops evaluates to false
-pygame.quit()
+    def update(self):
+        # Game Loop - Update
+        self.all_sprites.update()
+
+    def events(self):
+        # Game Loop - events
+        for event in pg.event.get():
+            # check for closing window
+            if event.type == pg.QUIT:
+                if self.playing:
+                    self.playing = False
+                self.running = False
+
+    def draw(self):
+        # Game Loop - draw
+        self.screen.fill(BLACK)
+        self.all_sprites.draw(self.screen)
+        # *after* drawing everything, flip the display
+        pg.display.flip()
+
+    def show_start_screen(self):
+        # game splash/start screen
+        pass
+
+    def show_go_screen(self):
+        # game over/continue
+        pass
+
+g = Game()
+g.show_start_screen()
+while g.running:
+    g.new()
+    g.show_go_screen()
+
+pg.quit()
