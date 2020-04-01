@@ -2,10 +2,14 @@
 # Jumpy! (a platform game) - Part 2
 # Video link: https://www.youtube.com/watch?v=8LRI0RLKyt0
 # Player movement
+# © 2019 KidsCanCode LLC / All rights reserved.
 
-# (C) KCC
+# Week of march 23 - Lore
+# Modularity, Github, import as, 
 
 import pygame as pg
+from pygame.sprite import Group
+# from pg.sprite import Group
 import random
 from settings import *
 from sprites import *
@@ -22,17 +26,29 @@ class Game:
 
     def new(self):
         # start a new game
-        self.all_sprites = pg.sprite.Group()
-        self.player = Player()
+        self.all_sprites = Group()
+        self.platforms = pg.sprite.Group()
+        self.player = Player(self)
         self.all_sprites.add(self.player)
+
+        ground = Platform(BLUE, 0, HEIGHT-40, WIDTH, 40)
+        self.all_sprites.add(ground)
+        self.platforms.add(ground)
+
+        plat1 = Platform(BLUE, 200, 400, 150, 20)
+        self.all_sprites.add(plat1)
+        self.platforms.add(plat1)
+
+        plat2 = Platform(BLUE, 150, 300, 150, 20)
+        self.all_sprites.add(plat2)
+        self.platforms.add(plat2)
+
+        # for plat in range(1,10):
+        #     plat = Platform(random.randint(0, WIDTH), random.randint(0, HEIGHT), 200, 20)
+        #     self.all_sprites.add(plat)
+        #     self.platforms.add(plat)
+
         self.run()
-
-        # self.platforms = pg.sprite.Group
-        # ground = Platform(0, HEIGHT-40, WIDTH, 40)
-        # self.platforms.add(ground)
-        # self.all_sprites.add(ground)
-
-        # plat1 = Platform(200, 400, 150, 20)
 
 
     def run(self):
@@ -47,7 +63,19 @@ class Game:
     def update(self):
         # Game Loop - Update
         self.all_sprites.update()
-
+        hits = pg.sprite.spritecollide(self.player, self.platforms, False)
+        if hits:
+            if self.player.rect.top > hits[0].rect.top:
+                print("i hit my head")
+                self.player.vel.y = 10
+                self.player.rect.top = hits[0].rect.bottom + 5
+                # self.player.hitpoints -= 10
+                # print(self.player.hitpoints)
+            # print("it collided")
+            else:
+                self.player.vel.y = 0
+                self.player.pos.y = hits[0].rect.top+1
+            
     def events(self):
         # Game Loop - events
         for event in pg.event.get():
