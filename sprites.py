@@ -7,6 +7,8 @@ from pygame.sprite import Sprite
 from settings import *
 vec = pg.math.Vector2
 
+from threading import *
+
 class Player(Sprite):
     # include game parameter to pass game class as argument in main...
     def __init__(self, game):
@@ -19,8 +21,15 @@ class Player(Sprite):
         self.pos = vec(WIDTH / 2, HEIGHT / 2)
         self.vel = vec(0, 0)
         self.acc = vec(0, 0)
-        # self.hitpoints = 100
-  
+        self.hp = 100
+    
+    # doesn't work yet
+    def pew(self):
+        laser = PewPew(self.game, self.pos.x, self.pos.y, 10, 10)
+        self.game.all_sprites.add(laser)
+        self.platforms.add(laser)
+        self.projectiles.add(laser)
+
     def jump(self):
         self.rect.x += 1
         hits = pg.sprite.spritecollide(self, self.game.platforms, False)
@@ -69,9 +78,14 @@ class Platform(Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
+        # self.vx = 5
+    # def update(self):
+    #     self.rect.x += self.vx
+    #     if self.rect.x + self.rect.width > WIDTH or self.rect.x < 0:
+    #         self.vx * -1
 
 class Item(Sprite):
-    # include game parameter to pass game class as argument in main...
+    # trying to include items that provide abilities
     def __init__(self, color, x, y, w, h):
         Sprite.__init__(self)
         self.image = pg.Surface((w, h))
@@ -82,3 +96,34 @@ class Item(Sprite):
   
     # def x(self):
     #     pass
+
+#doesn't work yet
+class PewPew(Sprite):
+    def __init__(self, game, color, x, y, w, h):
+        Sprite.__init(self)
+        self.game = game
+        self.image = pg.Surface((w,h))
+        self.image.fill(color)
+        self.rect = self.image.get_rect()
+        self.rect.x = xself.rect.y = y
+    def update(self):
+        # if self.game.player.vel.x > 0:
+        # self.rect.y -= 1
+        self.t = Timer(2.0, self.melt())
+        self.t.start
+        
+    def melt(self):
+        self.kill()
+
+class Health_Bar(Sprite):
+    def __init__(self, game, color, x, y, w, h):
+        Sprite.__init__(self)
+        self.game = game
+        self.image = pg.Surface((w, h))
+        self.image.fill(color)
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+    def update(self):
+        self.rect.width = self.game.player.hp
+        # self.game.screen.blit(self.image, (self.image(self.game.player.hp, 0)))

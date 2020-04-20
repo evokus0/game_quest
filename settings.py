@@ -10,11 +10,13 @@ FPS = 60
 GRAVITY = 9.8
 
 # Player properties
+# Added variable jump strength
 PLAYER_ACC = 0.5
 PLAYER_FRICTION = -0.05
 PLAYER_JUMP_STRENGTH = 15
 
 # define colors
+# Added some extra colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
