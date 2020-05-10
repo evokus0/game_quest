@@ -1,22 +1,25 @@
 # © 2019 KidsCanCode LLC / All rights reserved.
 
 # game options/settings
-TITLE = "watashi no geimu!"
-WIDTH = 480
-HEIGHT = 600
+TITLE = "Jumpy McJumpface! The Sequel"
+WIDTH = 800
+HEIGHT = 400
 FPS = 60
+
+FONT_NAME = 'arial'
+
+HS_FILE = "highscore.txt"
 
 # Environment options
 GRAVITY = 9.8
 
 # Player properties
-# Added variable jump strength
 PLAYER_ACC = 0.5
 PLAYER_FRICTION = -0.05
-PLAYER_JUMP_STRENGTH = 15
+PLAYER_JUMPPOWER = 10
 
 # define colors
-# Added some extra colors
+# Added some colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
