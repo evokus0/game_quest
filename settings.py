@@ -6,8 +6,8 @@ WIDTH = 800
 HEIGHT = 400
 FPS = 60
 
+# added these, used Bradfield's tutorials
 FONT_NAME = 'arial'
-
 HS_FILE = "highscore.txt"
 
 # Environment options
@@ -15,7 +15,7 @@ GRAVITY = 9.8
 
 # Player properties
 PLAYER_ACC = 0.5
-PLAYER_FRICTION = -0.05
+PLAYER_FRICTION = -0.1
 PLAYER_JUMPPOWER = 10
 
 # define colors

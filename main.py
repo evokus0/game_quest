@@ -1,7 +1,5 @@
 # KidsCanCode - Game Development with Pygame video series
-# Jumpy! (a platform game) - Part 2
-# Video link: https://www.youtube.com/watch?v=8LRI0RLKyt0
-# Player movement
+# Jumpy! (a platform game)
 # © 2019 KidsCanCode LLC / All rights reserved.
 
 import pygame as pg
@@ -25,7 +23,7 @@ def draw_player_ammo(surf, x, y, w):
     pg.draw.rect(surf, RED, fill_rect)
     pg.draw.rect(surf, WHITE, outline_rect, 2)
 
-# this is the game class, we create a new game at the bottom of the code...
+# Followed Bradfield's tutorials for the start and GO screens, drawing text, saving scores.
 class Game:
 
     def __init__(self):
@@ -43,6 +41,7 @@ class Game:
         # loading assets
         self.dir = path.dirname(__file__)
         # load high score
+        # Note - Bradfield's code doesh't work, looked in the comments and people said to use 'r+' instead of 'w' since 'w' is write only and not read.
         with open(path.join(self.dir, HS_FILE), 'r+') as f:
             try:
                 self.highscore = int(f.read())
@@ -54,39 +53,21 @@ class Game:
         self.score = 0
         self.all_sprites = Group()
         self.platforms = Group()
+        self.static_platforms = Group()
         self.mobT1_group = Group()
         self.mobT2_group = Group()
         self.tempGroup = Group()
         self.player = Player(self)
         self.all_sprites.add(self.player)
-        ground = Platform(self, 0, HEIGHT-40, WIDTH, 40, GREEN)
-        # mobT2_1 = MobT2(WIDTH/2, HEIGHT-95, 20, 55)
+        ground = Platform(self, WIDTH/2, HEIGHT-40, WIDTH, 40, GREEN)
+        # ground.rect.x = WIDTH / 2
+        # ground.rect.y = HEIGHT - 50
+        # ground2 = Platform(self, WIDTH - 25, HEIGHT-40, WIDTH - 25, 40, GREEN)
+
         self.all_sprites.add(ground)
-        self.platforms.add(ground)
-        # self.all_sprites.add(mobT2_1)
-        # self.mobT2_group.add(mobT2_1)
+        self.static_platforms.add(ground)
 
-        # you need to add new instances of the platform class to groups or it wont update or draw
-        # generates platforms that don't touch each other...
-        # comes from ccozort's game "Leapin' Wizards"
-        for plat in range(0, 6):
-            if len(self.platforms) < 2:
-                plat = Platform(self, random.randint(0,WIDTH-100), random.randint(0,HEIGHT-100), 100, 15, GREEN)
-                self.platforms.add(plat)
-                self.all_sprites.add(plat)
-                plat.spawn()
-
-            while True:
-                newPlat = Platform(self, random.randint(0,WIDTH-100), random.randint(0,HEIGHT-100), 100, 15, GREEN)
-                self.tempGroup.add(newPlat)
-                selfCollide = pg.sprite.groupcollide(self.tempGroup, self.platforms, True, False)
-                allCollide = pg.sprite.groupcollide(self.tempGroup, self.all_sprites, True, False)
-                if not selfCollide and not allCollide:
-                    self.platforms.add(newPlat)
-                    self.all_sprites.add(newPlat)
-                    self.tempGroup.remove(newPlat)
-                    # print(len(self.tempGroup))
-                    break
+        # REMEMBER THAT GROUND IS NOT IN PLATFORM GROUP!
 
         self.run()
 
@@ -113,63 +94,77 @@ class Game:
         self.all_sprites.update()
  
         # scrolling mechanic, activate at 1/4 of the screen
-        if self.player.pos.x >= WIDTH * 1/4:
-            self.player.pos.x -= int(abs(self.player.vel.x))
+        # Right now the player still seems to move forward.
+        if self.player.pos.x >= WIDTH / 4:
+            self.player.pos.x = WIDTH / 4
+            # set player location based on velocity
+            self.player.pos.x += self.player.vel.x
+            # scroll plats with player
             for plat in self.platforms:
-                plat.rect.x -= int(abs(self.player.vel.x))
+                # creates slight scroll based on player y velocity
+                plat.vel.x = -self.player.vel.x
                 if plat.rect.right < 0:
                     plat.kill()
-                    self.score += 1
 
-        # Chris Bradfield platform gen system, modified for horizontal
-        while len(self.platforms) < 7:
-            width = random.randrange(50, 100)
-            p = Platform(self, random.randrange(WIDTH + 30, WIDTH + 75), 
-                         random.randrange(0, WIDTH - width),
-                         width, 20, CYAN)
-            self.platforms.add(p)
-            self.all_sprites.add(p)
+        while len(self.mobT1_group) < 7:
+            mob = MobT1(self, random.randrange(WIDTH * 3/4, WIDTH + 200), HEIGHT - 100, 20, 40)
+            self.mobT1_group.add(mob)
+            self.all_sprites.add(mob)
 
-
-        while len(self.platforms) < 7:
-            self.platGen()     
-
+        # Kill trigger for passing below thee screen
         if self.player.rect.bottom > HEIGHT:
             self.playing = False
 
-        # if self.player.rect.bottom > HEIGHT:
-        #     for sprite in self.all_sprites:
-        #         sprite.rect.y -= max(self.player.vel.y, 10)
-        #         if sprite.rect.bottom < 0:
-        #             sprite.kill()
-        #     if len(self.platforms) == 0:
-        #         self.playing = False
-
-        hits = pg.sprite.spritecollide(self.player, self.platforms, False)
-        if hits:
-            self.player.vel.y = 0
-            self.player.pos.y = hits[0].rect.top+1
-            # if self.player.rect.top > hits[0].rect.top:
-            #     self.player.vel.y = 15
-            #     self.player.rect.top = hits[0].rect.bottom + 5
-            # else:
-            #     self.player.vel.y = 0
-            #     self.player.pos.y = hits[0].rect.top+1
-
-        hits = pg.sprite.spritecollide(self.player, self.platforms, False)
-        # mobT2_hits = pg.sprite.spritecollide(self.player, self.mobT2_group, False)
-        if hits:
-            if self.player.rect.top > hits[0].rect.top:
-                self.player.vel.y = 15
-                self.player.rect.top = hits[0].rect.bottom + 5
+        # Hit detection for regular platforms
+        phits = pg.sprite.spritecollide(self.player, self.platforms, False)
+        if phits:
+            if self.player.rect.top > phits[0].rect.top:
+                self.player.vel.y = 10
+                self.player.rect.top = phits[0].rect.bottom + 5
                 # self.player.hitpoints -= 5
+                # print("hitpoints are now " + str(self.player.hitpoints))
+                # print(self.player.hitpoints)
+            # print("it collided")
             else:
                 self.player.vel.y = 0
-                self.player.pos.y = hits[0].rect.top+1
+                self.player.pos.y = phits[0].rect.top+1
+        
+        # Hit detection for ground / static platforms
+        ghits = pg.sprite.spritecollide(self.player, self.static_platforms, False)
+        if ghits:
+            self.player.vel.y = 0
+            self.player.pos.y = ghits[0].rect.top+1
 
-        # if mobT2_hits:
-            # self.player.hitpoints -= 0.5
-            # # print("hitpoints are now " + str(self.player.hitpoints))
+
+        # # if mobT2_hits:
+        #     # self.player.hitpoints -= 0.5
+        #     # # print("hitpoints are now " + str(self.player.hitpoints))
+
+
+        # CAN"T GET THESE TO WORK ! always some idiosyncracy with them... Just going to spawn mobs on flat ground.
+
+        # # Chris Bradfield platform gen system, modified for horizontal
+        # while len(self.platforms) < 7:
+        #     width = random.randrange(50, 100)
+        #     p = Platform(self, random.randint(400, WIDTH+100), HEIGHT-40, width, 40, BLUE)
+        #     self.platforms.add(p)
+        #     self.all_sprites.add(p)
+
+        # # Plat generator, comes from ccozort's game "Leapin' Wizards"
+  
+        #     # while len(self.platforms) < 7:
+        #     #     width = random.randrange(150, 200)
+        #     #     newPlat = Platform(self, random.randint(WIDTH-100, WIDTH+100), HEIGHT-40, width, 40, BLUE)
+        #     #     self.tempGroup.add(newPlat)
+        #     #     selfCollide = pg.sprite.groupcollide(self.tempGroup, self.platforms, True, False)
+        #     #     allCollide = pg.sprite.groupcollide(self.tempGroup, self.all_sprites, True, False)
+        #     #     if not selfCollide and not allCollide:
+        #     #         self.platforms.add(newPlat)
+        #     #         self.all_sprites.add(newPlat)
+        #     #         self.tempGroup.remove(newPlat)
+        #     #         # print(len(self.tempGroup))
+            #         break
+
 
     def draw(self):
         # Game Loop - draw
