@@ -1,10 +1,11 @@
-# KidsCanCode - Game Development with Pygame video series
+# KidsCanCode - Game Development with video series
 # Jumpy! (a platform game)
 # © 2019 KidsCanCode LLC / All rights reserved.
 
 import pygame as pg
 from pygame.sprite import Group
 import random
+import time
 from settings import *
 from sprites import *
 from os import path
@@ -37,6 +38,7 @@ class Game:
         self.font_name = pg.font.match_font(FONT_NAME)
         self.load_data()
 
+        # Side note - Nothing gives you score yet.
     def load_data(self):
         # loading assets
         self.dir = path.dirname(__file__)
@@ -51,14 +53,23 @@ class Game:
     def new(self):
         # start a new game
         self.score = 0
+        self.runner_timer = 0
+        self.shooter_timer = 0
         self.all_sprites = Group()
+        self.players = Group()
+        self.all_mobs = Group()
         self.platforms = Group()
         self.static_platforms = Group()
-        self.mobT1_group = Group()
-        self.mobT2_group = Group()
+        self.runner_mobs = Group()
+        self.shooter_mobs = Group()
+        self.bullets = Group()
+        self.evil_bullets = Group()
         self.tempGroup = Group()
+
         self.player = Player(self)
         self.all_sprites.add(self.player)
+        self.players.add(self.player)
+
         ground = Platform(self, WIDTH/2, HEIGHT-40, WIDTH, 40, GREEN)
         # ground.rect.x = WIDTH / 2
         # ground.rect.y = HEIGHT - 50
@@ -88,6 +99,10 @@ class Game:
                 if self.playing:
                     self.playing = False
                 self.running = False
+            elif event.type == pg.KEYDOWN:
+                if event.key == pg.K_x:
+                    self.player.shoot(self)
+
 
     def update(self):
         # Update - listen to see if anything changes...
@@ -99,17 +114,66 @@ class Game:
             self.player.pos.x = WIDTH / 4
             # set player location based on velocity
             self.player.pos.x += self.player.vel.x
-            # scroll plats with player
+            # scroll plats and mobs with player
+            for mob in self.all_mobs:
+                mob.rect.x += -self.player.vel.x
             for plat in self.platforms:
-                # creates slight scroll based on player y velocity
                 plat.vel.x = -self.player.vel.x
                 if plat.rect.right < 0:
                     plat.kill()
 
-        while len(self.mobT1_group) < 7:
-            mob = MobT1(self, random.randrange(WIDTH * 3/4, WIDTH + 200), HEIGHT - 100, 20, 40)
-            self.mobT1_group.add(mob)
-            self.all_sprites.add(mob)
+        # spawn runner?
+        now = pg.time.get_ticks()
+        if now - self.runner_timer > RUNNER_FREQ + random.choice([-1000, -500, 0, 500, 1000]):
+            self.runner_timer = now
+            runner = RunnerMob(self)
+            self.all_sprites.add(runner)
+            self.all_mobs.add(runner)
+            self.runner_mobs.add(runner)
+
+        # spawn shooter?
+        now = pg.time.get_ticks()
+        if now - self.shooter_timer > SHOOTER_FREQ + random.choice([-1000, -500, 0, 500, 1000]):
+            self.shooter_timer = now
+            shooter = ShooterMob(self)
+            self.all_sprites.add(shooter)
+            self.all_mobs.add(shooter)
+            self.shooter_mobs.add(shooter)
+            
+        # bullet hit runner?
+        hits = pg.sprite.groupcollide(self.runner_mobs, self.bullets, True, True)
+        if hits:
+            pass
+
+            # self.player.ammo += 10
+            # if self.player.ammo > 100:
+            #     self.player.ammo = 100
+
+        # bullet hit shooter?
+        hits = pg.sprite.groupcollide(self.shooter_mobs, self.bullets, True, True)
+        if hits:
+            self.player.ammo += 20
+            if self.player.ammo > 100:
+                self.player.ammo = 100
+                
+        # evil bullet hit players? (had to make group)
+        hits = pg.sprite.groupcollide(self.evil_bullets, self.players, True, False)
+        if hits:
+            self.player.hitpoints -= 5
+
+        # player hit mob?
+        hits = pg.sprite.spritecollide(self.player, self.all_mobs, False)
+        if hits:
+            # self.player.hitpoints -= 10
+            self.playing = False
+
+        if self.player.hitpoints <= 0:
+            self.playing = False
+
+        # while len(self.mobT1_group) < 7:
+        #     mob = MobT1(self, random.randrange(WIDTH * 3/4, WIDTH + 200), HEIGHT - 100, 20, 40)
+        #     self.mobT1_group.add(mob)
+        #     self.all_sprites.add(mob)
 
         # Kill trigger for passing below thee screen
         if self.player.rect.bottom > HEIGHT:
@@ -189,8 +253,8 @@ class Game:
         # game splash/start screen
         self.screen.fill(BLACK)
         self.draw_text(TITLE, 48, WHITE, WIDTH/2, HEIGHT/4)
-        self.draw_text("Arrows to move, Space to jump", 22, WHITE, WIDTH/2, HEIGHT/2)
-        self.draw_text("Press key to play", 22, WHITE, WIDTH / 2, HEIGHT * 3 / 4)
+        self.draw_text("Right arrow to move forward, Z or Space to jump, C to shoot", 22, WHITE, WIDTH/2, HEIGHT/2)
+        self.draw_text("Press any key to play", 22, WHITE, WIDTH / 2, HEIGHT * 3 / 4)
         self.draw_text("High Score: " + str(self.highscore), 22, WHITE, WIDTH / 2, 15)
         pg.display.flip()
         self.wait_for_key()
@@ -202,7 +266,7 @@ class Game:
         self.screen.fill(BLACK)
         self.draw_text("YOU DIED!", 48, WHITE, WIDTH/2, HEIGHT/4)
         self.draw_text("Your Score: " + str(self.score), 22, WHITE, WIDTH/2, HEIGHT/2)
-        self.draw_text("Press key to play again", 22, WHITE, WIDTH / 2, HEIGHT * 3 / 4)
+        self.draw_text("Press any key to play again", 22, WHITE, WIDTH / 2, HEIGHT * 3 / 4)
         if self.score > self.highscore:
             self.highscore = self.score
             self.draw_text("NEW HIGH SCORE!", 22, WHITE, WIDTH / 2, HEIGHT * 5 / 8)
@@ -211,6 +275,7 @@ class Game:
         else:
             self.draw_text("Current High Score: " + str(self.highscore), 22, WHITE, WIDTH / 2, HEIGHT * 5 / 8)
         pg.display.flip()
+        time.sleep(2)
         self.wait_for_key()
 
     def wait_for_key(self):

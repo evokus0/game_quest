@@ -1,7 +1,7 @@
 # © 2019 KidsCanCode LLC / All rights reserved.
 
 # game options/settings
-TITLE = "Jumpy McJumpface! The Sequel"
+TITLE = "Jumpy! The Side-Scrolling Sequel"
 WIDTH = 800
 HEIGHT = 400
 FPS = 60
@@ -9,6 +9,12 @@ FPS = 60
 # added these, used Bradfield's tutorials
 FONT_NAME = 'arial'
 HS_FILE = "highscore.txt"
+
+# in Bradfield's code he didn't actually use this
+RUNNER_FREQ = 3000
+SHOOTER_FREQ = 5000
+BULLET_SHOOT_FREQ = 2000
+
 
 # Environment options
 GRAVITY = 9.8
